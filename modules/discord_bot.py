@@ -14,7 +14,7 @@ from datetime import datetime
 running_event = threading.Event()
 running_event.set()
 
-CONFIG_PATH = "configbackup.json"
+CONFIG_PATH = "config.json"
 with open(CONFIG_PATH, "r") as file:
     config = json.load(file)
 

@@ -34,7 +34,7 @@ class DiscordMacroUI:
         self.center_window()
         
         #config and config path
-        self.config_path = "configbackup.json"
+        self.config_path = "config.json"
         self.config = self.load_config()
 
         # initialize/start the discord bot
@@ -144,7 +144,7 @@ class DiscordMacroUI:
     
     def load_from_json(self):
         try:
-            with open("configbackup.json", "r") as file:
+            with open("config.json", "r") as file:
                 data = json.load(file)
                 self.scheduler_entries = data.get("item_scheduler", [])
                 
@@ -165,18 +165,18 @@ class DiscordMacroUI:
     def save_to_json(self):
         try:
             try:
-                with open("configbackup.json", "r") as file:
+                with open("config.json", "r") as file:
                     data = json.load(file)
             except (FileNotFoundError, json.JSONDecodeError):
                 data = {}
 
             data["item_scheduler"] = self.scheduler_entries
 
-            with open("configbackup.json", "w") as file:
+            with open("config.json", "w") as file:
                 json.dump(data, file, indent=4)
 
         except Exception as e:
-            print(f"Error saving to configbackup.json: {e}")
+            print(f"Error saving to config.json: {e}")
     
      ## ~ DISCORD BOT ## 
 

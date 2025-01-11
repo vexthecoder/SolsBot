@@ -29,7 +29,7 @@ def show_notification(title, message):
             pass
 
 def read_config():
-    config_name = '../configbackup.json'
+    config_name = '../config.json'
 
     if getattr(sys, 'frozen', False):
         application_path = os.path.dirname(os.path.realpath(sys.executable))
@@ -46,7 +46,7 @@ def read_config():
         save_config()
 
 def save_config():
-    config_name = '../configbackup.json'
+    config_name = '../config.json'
 
     if getattr(sys, 'frozen', False):
         application_path = os.path.dirname(os.path.realpath(sys.executable))

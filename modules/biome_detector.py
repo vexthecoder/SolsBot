@@ -4,7 +4,7 @@ from difflib import SequenceMatcher
 from PIL import Image, ImageEnhance
 
 class BiomeDetector:
-    def __init__(self, biome_detector_running, config_path="configbackup.json"):
+    def __init__(self, biome_detector_running, config_path="config.json"):
         self.set_tesseract_path()
         self.biome_detector_running = biome_detector_running
         self.config = self.load_config(config_path)
@@ -178,5 +178,5 @@ if __name__ == "__main__":
     running_event = threading.Event()
     running_event.set()
 
-    detector = BiomeDetector(biome_detector_running=running_event, config_path="../configbackup.json")
+    detector = BiomeDetector(biome_detector_running=running_event, config_path="../config.json")
     detector.run()
