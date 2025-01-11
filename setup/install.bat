@@ -15,7 +15,7 @@ set "VSCODE_INSTALLER=VSCodeSetup.exe"
 :menu
 cls
 echo ============================================
-echo Improvement Sol's Macro Setup (Noteab)
+echo SolsBot Requirement Installer
 echo ============================================
 echo [1] Download AutoHotkey v1.1 Installer
 echo [2] Download Visual Studio Code Installer
