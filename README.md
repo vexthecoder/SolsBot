@@ -38,9 +38,10 @@ SolsBot has a couple of different features it is capable of which are mostly Dis
 
 ## Setup
 ### Discord Bot
-Follow [this tutorial](https://www.youtube.com/watch?v=-m-Z7Wav-fM) to create your discord bot and input the token into the "Discord Bot Token" space.<br>
+Follow [this tutorial](https://www.youtube.com/watch?v=-m-Z7Wav-fM) to create your discord bot and paste the token into the "Discord Bot Token" space.<br>
 Make sure to enable EVERY priveledged gateway intent or the bot will not work.
-### Discord Webhook
+### Webhook
+Follow [this tutorial](https://youtu.be/fKksxz2Gdnc?t=13&si=7FdMdJW6SNqSMZ4N) to create a discord webhook and paste the webhook url into the "Webhook URL" space.
 
 ## Credits
 ### Owner

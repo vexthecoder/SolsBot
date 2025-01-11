@@ -1,5 +1,5 @@
-import time, cv2, pyautogui, pytesseract, json, os, re, requests, threading
-import numpy as np
+import time, cv2, pyautogui, pytesseract, json, os, re, requests, threading # type: ignore
+import numpy as np # type: ignore
 from difflib import SequenceMatcher
 from PIL import Image, ImageEnhance
 
@@ -22,7 +22,9 @@ class BiomeDetector:
             "Starfall": r"Starfall|stafall|sarfall|strfall|STARFALL",
             "Corruption": r"Corruption|corupt|corrupton|corrup|CORRUPTION",
             "Null": r"Null|nul|nui|nll|NULL",
-            "Glitched": r"\b\d\.\d{8,}\b"
+            "Glitched": r"\b\d\.\d{8,}\b",
+            "Graveyard": r"Graveyard|grave|yard|GRAVEYARD|GRAVE|YARD",
+            "Pumpkin Moon": r"Pumpkin Moon|pumpkin|moon|pumpkn|PUMPKIN MOON|PUMPKIN|MOON|PUMPKINMOON|Pumpkln|pumpkln",
         }
         
         self.biome_data = {
@@ -34,7 +36,9 @@ class BiomeDetector:
             "Starfall": {"color": 0x011ab7, "duration": 600},
             "Corruption": {"color": 0x6d32a8, "duration": 660},
             "Null": {"color": 0x838383, "duration": 90},
-            "Glitched": {"color": 0xbfff00, "duration": 164}
+            "Glitched": {"color": 0xbfff00, "duration": 164},
+            "Graveyard": {"color": 0x4d4d4d, "duration": 150},
+            "Pumpkin Moon": {"color": 0xff8000, "duration": 150}
         }
 
         # template for Glitched biome

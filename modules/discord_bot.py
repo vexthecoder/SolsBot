@@ -11,6 +11,9 @@ from discord.ext import commands # type: ignore
 from discord import app_commands # type: ignore
 from datetime import datetime
 
+running_event = threading.Event()
+running_event.set()
+
 CONFIG_PATH = "configbackup.json"
 with open(CONFIG_PATH, "r") as file:
     config = json.load(file)
@@ -24,7 +27,7 @@ def update_config(key, value):
         json.dump(config, file, indent=4)
 
 # setup bot and register commands
-def setup_bot(macro, running_event):
+def setup_bot(running_event):
     @bot.event
     async def on_ready():
         print(f"Bot is online as {bot.user}")
@@ -152,9 +155,40 @@ def setup_bot(macro, running_event):
             await ctx.followup.send(embed=local_embed, ephemeral=True)
             return
         
-        keyboard.press_and_release("f3")
+        stop_key = config.get("macro_stop_key", "F3")
+        keyboard.press_and_release(stop_key)
         local_embed = discord.Embed(
-            description="Macro stopped.", 
+            description="Macro stopped.\nKey pressed: " + stop_key, 
+            color=discord.Color.from_rgb(128, 128, 128)
+        )
+        await ctx.followup.send(embed=local_embed, ephemeral=True)
+
+    @app_commands.command(name="pause", description="Pause a macro.\nYou can change the keybind in the settings tab.")
+    async def pause(ctx: discord.Interaction):
+        user_id = ctx.user.id
+
+        if not config.get("DiscordBot_UserID"):
+            local_embed = discord.Embed(
+                title="Warning",
+                description="No User ID is configured. Please set your User ID in the bot settings to use commands.", 
+                color=discord.Color.from_rgb(128, 128, 128)
+            )
+            await ctx.followup.send(embed=local_embed, ephemeral=True)
+            return
+
+        if str(user_id) != str(config.get("DiscordBot_UserID")):
+            local_embed = discord.Embed(
+                title="Warning",
+                description="You do not have permission to use this command. Ensure the correct User ID is set.", 
+                color=discord.Color.from_rgb(128, 128, 128)
+            )
+            await ctx.followup.send(embed=local_embed, ephemeral=True)
+            return
+        
+        pause_key = config.get("macro_pause_key", "F2")
+        keyboard.press_and_release(pause_key)
+        local_embed = discord.Embed(
+            description="Macro paused.\nKey pressed: " + pause_key, 
             color=discord.Color.from_rgb(128, 128, 128)
         )
         await ctx.followup.send(embed=local_embed, ephemeral=True)
@@ -181,17 +215,18 @@ def setup_bot(macro, running_event):
             await ctx.followup.send(embed=local_embed, ephemeral=True)
             return
         
-        keyboard.press_and_release('f1')
+        start_key = config.get("macro_start_key", "F1")
+        keyboard.press_and_release(start_key)
         local_embed = discord.Embed(
-            description="Macro started.", 
+            description="Macro started.\nKey pressed: " + start_key, 
             color=discord.Color.from_rgb(128, 128, 128)
         )
         await ctx.followup.send(embed=local_embed, ephemeral=True)
 
     @app_commands.command(name="ping", description="How laggy is your pc?")
     async def ping(ctx: discord.Interaction):
-        start_time = datetime.now()
-        latency = (datetime.now() - start_time).total_seconds() * 1000  # convert to milliseconds
+        latency = round(bot.latency * 1000)  # Convert to milliseconds
+        print(latency)
     
         if latency <= 80:
             color = discord.Color.green()
@@ -202,10 +237,10 @@ def setup_bot(macro, running_event):
     
         local_embed = discord.Embed(
                 title="Pong...",
-                description="Latency: {:.2f}ms".format(latency), 
+                description=f"Latency: {latency}ms", 
                 color=color
         )
-        await ctx.followup.send(embed=local_embed, ephemeral=True)
+        await ctx.response.send_message(embed=local_embed, ephemeral=True)
 
     @app_commands.command(name="chat", description="Send a message to the Roblox chat.\nDo NOT use this command while running a macro.")
     async def chat(ctx: discord.Interaction, message: str):
@@ -291,13 +326,14 @@ def setup_bot(macro, running_event):
             await ctx.followup.send(embed=local_embed, ephemeral=True)
 
     # add commands to tree
-    bot.tree.add_command(screenshot)
-    bot.tree.add_command(stop)
     bot.tree.add_command(start)
-    bot.tree.add_command(ping)
+    bot.tree.add_command(pause)
+    bot.tree.add_command(stop)
+    bot.tree.add_command(screenshot)
     bot.tree.add_command(chat)
+    bot.tree.add_command(ping)
 
 # start the bot
-def start_bot(macro, running_event):
-    setup_bot(macro, running_event)
+def start_bot(running_event):
+    setup_bot(running_event)
     bot.run(config["DiscordBot_Token"])
