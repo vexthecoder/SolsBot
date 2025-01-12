@@ -581,7 +581,7 @@ class DiscordMacroUI:
             "Info: Provides general information and navigation tips.\n"
             "Discord: Configure the Discord bot and webhook settings.\n"
             "Server Sniper: Snipe private servers.\n"
-            "Auto Clicker: Automatically click at a specified interval.\n"
+            # "Auto Clicker: Automatically click at a specified interval.\n"
             "Settings: Adjust general settings.\n"
             "Credits: View credits and contributors."
         ), wraplength=400, justify="left")
