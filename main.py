@@ -8,15 +8,14 @@ from pynput import mouse, keyboard
 from PIL import ImageGrab, Image, ImageDraw, ImageTk
 from modules.discord_bot import start_bot
 from modules.server_sniper import start_script, stop_script, pause_script
-
-update_num = requests.get("https://raw.githubusercontent.com/vexthecoder/SolsBot/main/version").text.strip()
-if update_num != "v1":
-    messagebox.showinfo("Update Available", f"An update is available for SolsBot. Please download the latest version from the GitHub repository.")
+from modules.autoclicker import AutoClicker
+from pynput.keyboard import KeyCode
+from pynput.mouse import Button
 
 class DiscordMacroUI:
     def __init__(self, root):
         self.root = root
-        self.root.title(f"SolsBot UI | v1")
+        self.root.title(f"SolsBot UI | v1.0.1")
         self.root.configure(bg="#2C2F33")
         self.dark_mode = True
 
@@ -50,16 +49,48 @@ class DiscordMacroUI:
         self.setup_info_tab()
         self.setup_discord_tab()
         self.setup_serversniper_tab()
+        if self.config.get("developer", False):
+            self.setup_autoclicker_tab()
         self.setup_settings_tab()
         self.setup_credits_tab()
         self.auto_resize()
 
         #~ assign buttons:
         self.coord_vars = {}
-        
+
+        #~ check for updates
+        self.check_for_updates()
+
+    def show_update_popup(self, root, current_version, latest_version):
+        update_window = tk.Toplevel(root)
+        update_window.title("Update Available")
+        update_window.geometry("400x200")
+        update_window.attributes("-topmost", True)
+
+        ttk.Label(update_window, text="A new update is available!", font=("Helvetica", 14, "bold")).pack(pady=10)
+        ttk.Label(update_window, text=f"Current Version: {current_version}", font=("Helvetica", 12)).pack(pady=5)
+        ttk.Label(update_window, text=f"Latest Version: {latest_version}", font=("Helvetica", 12)).pack(pady=5)
+
+        button_frame = ttk.Frame(update_window)
+        button_frame.pack(pady=20)
+
+        update_button = ttk.Button(button_frame, text="Update", command=lambda: [webbrowser.open("https://github.com/vexthecoder/SolsBot/releases/latest"), update_window.destroy()])
+        update_button.grid(row=0, column=0, padx=10)
+
+        cancel_button = ttk.Button(button_frame, text="Cancel", command=update_window.destroy)
+        cancel_button.grid(row=0, column=1, padx=10)
+
+    def check_for_updates(self):
+        update_num = requests.get("https://raw.githubusercontent.com/vexthecoder/SolsBot/main/version").text.strip()
+        if update_num != "v1.0.1":
+            current_version = "v1.0.1"
+            latest_version = update_num
+            if latest_version != current_version:
+                self.show_update_popup(self.root, current_version, latest_version)
+
     def system_message(self, message):
         messagebox.showinfo("Discord Macro UI", message)
-           
+
     def load_config(self):
         try:
             with open(self.config_path, "r") as file:
@@ -99,9 +130,6 @@ class DiscordMacroUI:
             self.system_message("Settings imported successfully! Please restart the macro to apply the changes.")
         except Exception as e:
             self.system_message(f"Error importing settings: {str(e)}")
-        
-    #?? Start and stop macro loop goober ##
-    #& what kind of this fr*nch keyboard .-.
     
     def get_key_bindings(self):
         azerty_keyboard = self.config.get("AZERTY_Keyboard", False)
@@ -510,19 +538,26 @@ class DiscordMacroUI:
     def setup_tabs(self):
         self.tab_control = ttk.Notebook(self.root)
         
-        # Define notebook
+        # Define and add tabs to notebook
         self.info_tab = ttk.Frame(self.tab_control)
-        self.discord_tab = ttk.Frame(self.tab_control)
-        self.serversniper_tab = ttk.Frame(self.tab_control)
-        self.settings_tab = ttk.Frame(self.tab_control)
-        self.credits_tab = ttk.Frame(self.tab_control)
-
-        # Add tabs to the notebook
         self.tab_control.add(self.info_tab, text="Info")
+
+        self.discord_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(self.discord_tab, text="Discord")
+
+        self.serversniper_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(self.serversniper_tab, text="Server Sniper")
+
+        if self.config.get("developer", False):
+            self.autoclicker_tab = ttk.Frame(self.tab_control)
+            self.tab_control.add(self.autoclicker_tab, text="Auto Clicker")
+
+        self.settings_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(self.settings_tab, text="Settings")
+
+        self.credits_tab = ttk.Frame(self.tab_control)
         self.tab_control.add(self.credits_tab, text="Credits")
+
         self.tab_control.pack(expand=1, fill="both")
 
     def setup_info_tab(self):
@@ -546,6 +581,7 @@ class DiscordMacroUI:
             "Info: Provides general information and navigation tips.\n"
             "Discord: Configure the Discord bot and webhook settings.\n"
             "Server Sniper: Snipe private servers.\n"
+            "Auto Clicker: Automatically click at a specified interval.\n"
             "Settings: Adjust general settings.\n"
             "Credits: View credits and contributors."
         ), wraplength=400, justify="left")
@@ -619,8 +655,9 @@ class DiscordMacroUI:
         /start - Starts an external macro
         /stop - Stops an external macro
         /pause - Toggles pause for an external macro
-        /rejoin - Rejoin your private server
+        /ping - Gets the bot's latency (response time)
         /screenshot - Sends a screenshot of whatever is on the screen
+        /chat <message> - Sends a message to the roblox chat
         """
         tk.Label(discordbot_info, text="Discord Bot Commands", font=("Helvetica", 14, "bold")).pack(pady=10)
         tk.Label(discordbot_info, text=discordbot_commands, justify="left", anchor="w").pack(padx=10, pady=10, fill="both", expand=True)
@@ -693,6 +730,153 @@ class DiscordMacroUI:
         self.recent_message_text.insert(tk.END, f"{message}")
         self.recent_message_text.config(state=tk.DISABLED)
         self.recent_message_text.see(tk.END)
+
+    def setup_autoclicker_tab(self):
+        main_frame = ttk.Frame(self.autoclicker_tab)
+        main_frame.pack(expand=1, fill="both", padx=10, pady=10)
+
+        # Hotkey Frame
+        self.hotkey_frame = ttk.LabelFrame(main_frame, text="Hotkey")
+        self.hotkey_frame.grid(row=0, column=0, padx=10, pady=10, sticky="nw")
+
+        # Hotkey Configuration
+        ttk.Label(self.hotkey_frame, text="Hotkey:").grid(row=0, column=0, padx=10, pady=5)
+        self.hotkey_entry = ttk.Entry(self.hotkey_frame, width=10)
+        self.hotkey_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.hotkey_entry.insert(0, self.config.get("autoclicker_hotkey", "F7"))
+        self.hotkey_entry.bind("<FocusOut>", lambda e: self.update_config("autoclicker_hotkey", self.hotkey_entry.get()))
+
+        # Delay Frame
+        self.delay_frame = ttk.LabelFrame(main_frame, text="Delay")
+        self.delay_frame.grid(column=0, row=1, padx=10, pady=10, sticky="nw")
+
+        # Delay Input Boxes
+        ttk.Label(self.delay_frame, text="Minutes:").grid(row=0, column=0, padx=10, pady=5)
+        self.delay_minutes = ttk.Entry(self.delay_frame, width=5)
+        self.delay_minutes.grid(row=0, column=1, padx=5, pady=5)
+        self.delay_minutes.insert(0, self.config.get("autoclicker_delay_minutes", "0"))
+        self.delay_minutes.bind("<FocusOut>", lambda e: self.update_config("autoclicker_delay_minutes", self.delay_minutes.get()))
+
+        ttk.Label(self.delay_frame, text="Seconds:").grid(row=1, column=0, padx=10, pady=5)
+        self.delay_seconds = ttk.Entry(self.delay_frame, width=5)
+        self.delay_seconds.grid(row=1, column=1, padx=5, pady=5)
+        self.delay_seconds.insert(0, self.config.get("autoclicker_delay_seconds", "1"))
+        self.delay_seconds.bind("<FocusOut>", lambda e: self.update_config("autoclicker_delay_seconds", self.delay_seconds.get()))
+
+        ttk.Label(self.delay_frame, text="Milliseconds:").grid(row=2, column=0, padx=10, pady=5)
+        self.delay_milliseconds = ttk.Entry(self.delay_frame, width=5)
+        self.delay_milliseconds.grid(row=2, column=1, padx=5, pady=5)
+        self.delay_milliseconds.insert(0, self.config.get("autoclicker_delay_milliseconds", "0"))
+        self.delay_milliseconds.bind("<FocusOut>", lambda e: self.update_config("autoclicker_delay_milliseconds", self.delay_milliseconds.get()))
+
+        # Status Frame
+        status_frame = ttk.LabelFrame(main_frame, text="Auto Clicker Status")
+        status_frame.grid(column=0, row=2, columnspan=2, padx=10, pady=10, sticky="nw")
+
+        self.autoclicker_status = ttk.Label(status_frame, text="Status: ", font=("Helvetica", 12, "bold"))
+        self.autoclicker_status.grid(column=0, row=0, padx=5, pady=5, sticky="w")
+
+        self.status_value = ttk.Label(status_frame, text="Off", font=("Helvetica", 12, "bold"), foreground="red")
+        self.status_value.grid(column=1, row=0, padx=5, pady=5, sticky="w")
+
+        # Location Frame
+        self.location_frame = ttk.LabelFrame(main_frame, text="Location")
+        self.location_frame.grid(row=0, column=1, rowspan=2, padx=10, pady=10, sticky="nw")
+
+        # Fixed Location Option
+        self.fixed_location_var = tk.BooleanVar(value=self.config.get("autoclicker_fixed_location", False))
+        self.fixed_location_checkbox = ttk.Checkbutton(self.location_frame, text="Fixed Location", variable=self.fixed_location_var)
+        self.fixed_location_checkbox.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+        self.fixed_location_checkbox.bind("<FocusOut>", lambda e: self.update_config("autoclicker_fixed_location", self.fixed_location_var.get()))
+
+        self.assign_button = ttk.Button(self.location_frame, text="Assign Click", command=self.ac_start_capture_thread)
+        self.assign_button.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        self.x_coord_label = ttk.Label(self.location_frame, text="X Coord:")
+        self.y_coord_label = ttk.Label(self.location_frame, text="Y Coord:")
+        self.x_coord_entry = ttk.Entry(self.location_frame, width=10)
+        self.y_coord_entry = ttk.Entry(self.location_frame, width=10)
+
+        self.x_coord_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+        self.x_coord_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        self.x_coord_entry.insert(0, self.config.get("autoclicker_x_coord", "0"))
+        self.x_coord_entry.bind("<FocusOut>", lambda e: self.update_config("autoclicker_x_coord", self.x_coord_entry.get()))
+
+        self.y_coord_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        self.y_coord_entry.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        self.y_coord_entry.insert(0, self.config.get("autoclicker_y_coord", "0"))
+        self.y_coord_entry.bind("<FocusOut>", lambda e: self.update_config("autoclicker_y_coord", self.y_coord_entry.get()))
+
+        # Control Frame
+        self.control_frame = ttk.LabelFrame(main_frame, text="Controls")
+        self.control_frame.grid(row=2, column=1, columnspan=2, pady=10)
+
+        # Control Buttons
+        self.start_button = ttk.Button(self.control_frame, text="Start", command=self.toggle_autoclicker)
+        self.start_button.grid(row=0, column=0, padx=5)
+
+        self.stop_button = ttk.Button(self.control_frame, text="Stop", command=self.toggle_autoclicker)
+        self.stop_button.grid(row=0, column=1, padx=5)
+
+        self.update_autoclicker_status()
+
+    def ac_start_capture_thread(self):
+        capture_thread = threading.Thread(target=self.ac_capture_mouse_position)
+        capture_thread.daemon = True
+        capture_thread.start()
+
+    def ac_capture_mouse_position(self):
+        if hasattr(self, "capture_window") and self.capture_window.winfo_exists():
+            return
+
+        self.capture_window = tk.Toplevel(self.root)
+        self.capture_window.attributes("-fullscreen", True)
+        self.capture_window.attributes("-alpha", 0.3)
+        self.capture_window.config(cursor="cross")
+
+        def on_click(event):
+            self.x_coord_entry.delete(0, tk.END)
+            self.x_coord_entry.insert(0, event.x)
+            self.y_coord_entry.delete(0, tk.END)
+            self.y_coord_entry.insert(0, event.y)
+            self.capture_window.destroy()
+
+        self.capture_window.bind("<Button-1>", on_click)
+
+    def update_autoclicker_status(self):
+        status = "On" if hasattr(self, 'autoclicker') and self.autoclicker.running else "Off"
+        color = "green" if status == "On" else "red"
+        self.status_value.config(text=status, foreground=color)
+
+    def toggle_autoclicker(self):
+        if hasattr(self, 'autoclicker') and self.autoclicker.running:
+            self.stop_autoclicker()
+        else:
+            self.start_autoclicker()
+
+    def start_autoclicker(self):
+        delay = (int(self.delay_minutes.get() or 0) * 60 +
+                 int(self.delay_seconds.get() or 0) +
+                 int(self.delay_milliseconds.get() or 0) / 1000.0)
+        fixed_position = (int(self.x_coord_entry.get()), int(self.y_coord_entry.get())) if self.fixed_location_var.get() else None
+
+        self.update_config("autoclicker_delay_minutes", self.delay_minutes.get())
+        self.update_config("autoclicker_delay_seconds", self.delay_seconds.get())
+        self.update_config("autoclicker_delay_milliseconds", self.delay_milliseconds.get())
+        self.update_config("autoclicker_hotkey", self.hotkey_entry.get())
+        self.update_config("autoclicker_fixed_location", self.fixed_location_var.get())
+        self.update_config("autoclicker_x_coord", self.x_coord_entry.get())
+        self.update_config("autoclicker_y_coord", self.y_coord_entry.get())
+
+        config_path = "config.json"
+        self.autoclicker = AutoClicker(config_path)
+        self.autoclicker.start_listener()
+        self.update_autoclicker_status()
+
+    def stop_autoclicker(self):
+        if hasattr(self, 'autoclicker'):
+            self.autoclicker.exit()
+        self.update_autoclicker_status()
 
     def setup_settings_tab(self):
         main_frame = ttk.Frame(self.settings_tab)

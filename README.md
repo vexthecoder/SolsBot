@@ -10,8 +10,10 @@
   - Download the most recent version of SolsBot through the most recent [GitHub Release](https://github.com/vexthecoder/SolsBot/releases/latest) (Download source code ZIP)
   - After downloading, extract the ZIP file to your desired directory
   - Open the "setup" folder and run install.bat (this will open the requirement installer)
-  - Choose option 5 (for the quickist installation), when the install is finished, you can close the window
-  - You can now run SolsBot through the start.bat file in the main directory folder
+  - Choose option 4 and open every installer it downloads (besides Visual Studio Code).<br>
+When installing python, make SURE to click "Add python.exe to PATH" in the bottom left of the python installer.
+  - Once you have installed everything, open the install.bat file back up and choose option 6. This should install all the python requirements.
+  - Once everything finishes installing, you should be good to go. Just open up start.bat in the main directory.
 
 ## Running SolsBot
   - You can run the application by opening "start.bat"
@@ -22,6 +24,7 @@ SolsBot has a couple of different features it is capable of which are mostly Dis
   - Discord Webhooks
   - Discord Bot Remote Commands
 - Server Sniper
+- AutoClicker
 - External Macro Support
 
 ## FAQ

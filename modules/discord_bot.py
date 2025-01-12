@@ -6,7 +6,6 @@ import requests
 import os
 import keyboard # type: ignore
 import time
-import webbrowser
 
 from discord.ext import commands # type: ignore
 from discord import app_commands # type: ignore
@@ -19,7 +18,7 @@ CONFIG_PATH = "config.json"
 with open(CONFIG_PATH, "r") as file:
     config = json.load(file)
 
-intents = discord.Intents.default()
+intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="/", intents=intents)
 
 def update_config(key, value):
@@ -224,44 +223,6 @@ def setup_bot(running_event):
         )
         await ctx.followup.send(embed=local_embed, ephemeral=True)
 
-    @app_commands.command(name="rejoin", description="Rejoin your private server. Do NOT use this command while running a macro.")
-    async def rejoin(ctx: discord.Interaction):
-        private_server_link = config.get("PrivateServerLink", "")
-        play_button_location = config.get("play_button_location")
-    
-        if not private_server_link:
-            await ctx.response.send_message("No Private Server link is specified, please specify a Private Server link in the Settings tab.", ephemeral=True)
-            return
-        
-        if not play_button_location:
-            await ctx.response.send_message("Play button location is not configured.", ephemeral=True)
-            return
-
-        # Close Roblox application
-        if os.name == 'nt':  # Windows
-            os.system("taskkill /f /im RobloxPlayerBeta.exe")
-
-        # Open the private server link
-        webbrowser.open(private_server_link)
-        await ctx.response.send_message("Rejoining specified private server...", ephemeral=True)
-        # Wait until Roblox has opened
-        while True:
-            tasks = os.popen('tasklist').read()
-            if 'RobloxPlayerBeta.exe' in tasks:
-                break
-            time.sleep(1)
-        
-        # Wait 120 seconds
-        time.sleep(120)
-        
-        # Click the play button
-        play_button_location = config.get("play_button_location")
-        if play_button_location:
-            x, y = play_button_location
-            pyautogui.click(x, y)
-        else:
-            await ctx.followup.send("Play button location is not configured.", ephemeral=True)
-
     @app_commands.command(name="ping", description="How laggy is your pc?")
     async def ping(ctx: discord.Interaction):
         latency = round(bot.latency * 1000)  # Convert to milliseconds
@@ -374,4 +335,5 @@ def setup_bot(running_event):
 # start the bot
 def start_bot(running_event):
     setup_bot(running_event)
-    bot.run(config["DiscordBot_Token"])
+    bot_token = config.get("DiscordBot_Token")
+    bot.run(bot_token)
