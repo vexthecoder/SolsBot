@@ -19,19 +19,21 @@ echo SolsBot Requirement Installer
 echo ============================================
 echo [1] Download AutoHotkey v1.1 Installer
 echo [2] Download Visual Studio Code Installer
-echo [3] Download Python and Tesseract Installers
-echo [4] Install required Python Packages
-echo [5] Download/Install Everything (Except VSCode)
-echo [6] Exit
+echo [3] Download Python Installer
+echo [4] Download All Installers
+echo [5] Install required Python Packages
+echo [6] Download/Install Everything (Except VSCode)
+echo [7] Exit
 echo ============================================
-set /p "choice=Choose an option (1/2/3/4/5/6): "
+set /p "choice=Choose an option (1/2/3/4/5/6/7): "
 
 if "%choice%"=="1" goto download_ahk
 if "%choice%"=="2" goto download_vscode
-if "%choice%"=="3" goto download_installers
-if "%choice%"=="4" goto install_packages
-if "%choice%"=="5" goto install_everything
-if "%choice%"=="6" exit
+if "%choice%"=="3" goto download_python
+if "%choice%"=="4" goto download_installers
+if "%choice%"=="5" goto install_packages
+if "%choice%"=="6" goto install_everything
+if "%choice%"=="7" exit
 echo Invalid option. Please choose 1, 2, 3, 4, 5, or 6.
 pause
 goto menu
@@ -71,7 +73,7 @@ pause
 goto menu
 
 
-:download_installers
+:download_python
 cls
 
 where curl >nul 2>&1
@@ -95,18 +97,66 @@ echo Please run "%PYTHON_INSTALLER%" manually.
 echo IMPORTANT: During installation, ensure you enable the "Add Python to PATH" option.
 echo ============================================
 pause
+goto menu
 
-echo Downloading Tesseract 5.5.0 installer...
-curl -L -o "%TESSERACT_INSTALLER%" "%TESSERACT_URL%"
+:: echo Downloading Tesseract 5.5.0 installer...
+:: curl -L -o "%TESSERACT_INSTALLER%" "%TESSERACT_URL%"
+:: if errorlevel 1 (
+::     echo Failed to download Tesseract installer. Check your internet connection or URL.
+::     pause
+::     exit /b
+:: )
+
+:: echo ============================================
+:: echo Tesseract installer downloaded successfully.
+:: echo Please run "%TESSERACT_INSTALLER%" manually.
+:: echo ============================================
+:: pause
+:: goto menu
+
+:download_installers
+cls
+
+echo Downloading AutoHotkey v1.1 installer...
+curl -L -o "%AHK_INSTALLER%" "%AHK_URL%"
 if errorlevel 1 (
-    echo Failed to download Tesseract installer. Check your internet connection or URL.
+    echo Failed to download AutoHotkey installer. Check your internet connection or URL.
     pause
     exit /b
 )
 
 echo ============================================
-echo Tesseract installer downloaded successfully.
-echo Please run "%TESSERACT_INSTALLER%" manually.
+echo AutoHotkey installer downloaded successfully.
+echo Please run "%AHK_INSTALLER%" manually.
+echo ============================================
+pause
+
+echo Downloading Python 3.12.7 installer...
+curl -L -o "%PYTHON_INSTALLER%" "%PYTHON_URL%"
+if errorlevel 1 (
+    echo Failed to download Python installer. Check your internet connection or URL.
+    pause
+    exit /b
+)
+
+echo ============================================
+echo Python installer downloaded successfully.
+echo Please run "%PYTHON_INSTALLER%" manually.
+echo IMPORTANT: During installation, ensure you enable the "Add Python to PATH" option.
+echo ============================================
+pause
+
+echo Downloading Visual Studio Code installer...
+curl -L -o "%VSCODE_INSTALLER%" "%VSCODE_URL%"
+if errorlevel 1 (
+    echo Failed to download Visual Studio Code installer. Check your internet connection or URL.
+    pause
+    exit /b
+)
+
+echo ============================================
+echo Visual Studio Code installer downloaded successfully.
+echo Please run "%VSCODE_INSTALLER%" manually.
 echo ============================================
 pause
 goto menu

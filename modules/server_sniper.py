@@ -66,9 +66,9 @@ def start_script(update_status_callback=None, update_recent_message_callback=Non
         return
 
     if running:
-        print("Script is already running.")
+        print("Server Sniper is already running.")
         return
-    print("Starting script...")
+    print("Server Sniper has started.")
     running = True
     paused = False
     if update_status_callback:
@@ -78,9 +78,9 @@ def start_script(update_status_callback=None, update_recent_message_callback=Non
 def stop_script(update_status_callback=None):
     global running
     if not running:
-        print("Script is not running.")
+        print("Server Sniper is not running.")
         return
-    print("Stopping script...")
+    print("Server Sniper has stopped.")
     running = False
     if update_status_callback:
         update_status_callback("Stopped")
@@ -88,11 +88,11 @@ def stop_script(update_status_callback=None):
 def pause_script(update_status_callback=None):
     global paused
     if not running:
-        print("Script is not running.")
+        print("Server Sniper is not running.")
         return
     paused = not paused
     state = "Paused" if paused else "Running"
-    print(f"Script {state}.")
+    print(f"Server Sniper is {state}.")
     if update_status_callback:
         update_status_callback(state)
 
@@ -119,7 +119,7 @@ def main(update_recent_message_callback=None):
         show_notification("Error!", "Discord Channel Link Empty or Invalid!")
         return
 
-    print("Script is now running. Press F2 to pause, F3 to stop.")
+    print("Server Sniper has resumed.")
 
     while running:
         if paused:
@@ -183,15 +183,14 @@ def main(update_recent_message_callback=None):
                             "Server Link Sniped!", 
                             f"Server Link sniped with the term \"{matched_keyword}\".Server Link: {link}"
                         )
+                        if update_recent_message_callback:
+                            username = message["author"]["username"]
+                            formatted_message = message["content"]
+                            update_recent_message_callback(username, formatted_message)
                     else:
                         print(f"Link is older than 4 minutes. Ignoring.")
                 else:
                     print("Non-Sol's RNG link detected. Ignoring for safety.")
-
-            if update_recent_message_callback:
-                username = message["author"]["username"]
-                formatted_message = message["content"]
-                update_recent_message_callback(username, formatted_message)
 
             while len(messages) > 10:
                 messages.popleft()

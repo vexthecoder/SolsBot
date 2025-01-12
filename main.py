@@ -8,11 +8,15 @@ from pynput import mouse, keyboard
 from PIL import ImageGrab, Image, ImageDraw, ImageTk
 from modules.discord_bot import start_bot
 from modules.server_sniper import start_script, stop_script, pause_script
- 
+
+update_num = requests.get("https://raw.githubusercontent.com/vexthecoder/SolsBot/main/version").text.strip()
+if update_num != "v1":
+    messagebox.showinfo("Update Available", f"An update is available for SolsBot. Please download the latest version from the GitHub repository.")
+
 class DiscordMacroUI:
     def __init__(self, root):
         self.root = root
-        self.root.title(f"SolsBot UI | Pre-v1")
+        self.root.title(f"SolsBot UI | v1")
         self.root.configure(bg="#2C2F33")
         self.dark_mode = True
 
@@ -50,24 +54,6 @@ class DiscordMacroUI:
         self.setup_credits_tab()
         self.auto_resize()
 
-        # Variable for eon1 record and replay custom path 
-        self.listener = None
-        self.record_thread = None
-        self.replay_thread = None
-        self.is_replaying = False
-        self.current_page = 0
-        self.sub_paths = [f"Sub-Path {i + 1}" for i in range(8)]
-        
-        # item scheduler:
-        self.scheduler_entries = []
-        self.entry_vars = []
-        self.entry_widgets = []
-        self.available_items = ["Strange Controller", "Biome Randomizer", "Lucky Potion", "Speed Potion", 
-                                "Fortune Potion I", "Fortune Potion II", "Fortune Potion III", 
-                                "Haste Potion I", "Haste Potion II", "Haste Potion III", "Warp Potion",
-                                 "Transcendant Potion", "Heavenly Potion I", "Heavenly Potion II", 
-                                "Merchant Teleport", "Oblivion Potion", "Pump King's Blood"]
-        
         #~ assign buttons:
         self.coord_vars = {}
         
@@ -110,7 +96,7 @@ class DiscordMacroUI:
             self.config.update(imported_config)
             self.save_config()
 
-            self.system_message("Settings imported successfully! Please restart the macro to take effect :3")
+            self.system_message("Settings imported successfully! Please restart the macro to apply the changes.")
         except Exception as e:
             self.system_message(f"Error importing settings: {str(e)}")
         
@@ -126,9 +112,9 @@ class DiscordMacroUI:
     def start_key_listener(self):
         def on_press(key):
             try:
-                start_key = self.config.get("start_key", "F1")
-                pause_key = self.config.get("pause_key", "F2")
-                stop_key = self.config.get("stop_key", "F3")
+                start_key = self.config.get("start_key", "F4")
+                pause_key = self.config.get("pause_key", "F5")
+                stop_key = self.config.get("stop_key", "F6")
 
                 if hasattr(key, 'char') and key.char == start_key.lower():
                     start_script()
@@ -142,43 +128,7 @@ class DiscordMacroUI:
         with keyboard.Listener(on_press=on_press) as listener:
             listener.join()
     
-    def load_from_json(self):
-        try:
-            with open("config.json", "r") as file:
-                data = json.load(file)
-                self.scheduler_entries = data.get("item_scheduler", [])
-                
-                for entry in self.scheduler_entries:
-                    entry.setdefault("item", self.available_items[0])
-                    entry.setdefault("quantity", 1)
-                    entry.setdefault("frequency", 1)
-                    entry.setdefault("frequency_unit", "Minutes")
-                    entry.setdefault("biome", "Any")
-
-        except (FileNotFoundError, json.JSONDecodeError):
-            self.scheduler_entries = [
-                {"item": self.available_items[0], "quantity": 1, "frequency": 1, "frequency_unit": "Minutes", "biome": "Any"}
-            ]
-
-        self.refresh_itemscheduler_ui()
-
-    def save_to_json(self):
-        try:
-            try:
-                with open("config.json", "r") as file:
-                    data = json.load(file)
-            except (FileNotFoundError, json.JSONDecodeError):
-                data = {}
-
-            data["item_scheduler"] = self.scheduler_entries
-
-            with open("config.json", "w") as file:
-                json.dump(data, file, indent=4)
-
-        except Exception as e:
-            print(f"Error saving to config.json: {e}")
-    
-     ## ~ DISCORD BOT ## 
+    ## ~ DISCORD BOT ## 
 
     def toggle_discordbot_enabled(self):
         if self.enable_discordbot.get() == 1 and not self.discordbot_token_entry.get():
@@ -213,10 +163,10 @@ class DiscordMacroUI:
         
         self.sections = [
             {
-                "name": "Misc.",
+                "name": "Misc",
                 "buttons": {
-                    "Open Chat Button": "open_chat_button_location",
-                    "Chat Box (Upper Most Left Corner)": "chat_box_location"
+                    "Open/Close Chat Button": "chat_button_location",
+                    "Play Button (Main Menu)": "play_button_location"
                 }
             }
         ]
@@ -228,46 +178,207 @@ class DiscordMacroUI:
         navigation_frame = ttk.Frame(self.assign_menu_window)
         navigation_frame.grid(row=10, column=0, columnspan=4, pady=10)
 
+        save_button = ttk.Button(navigation_frame, text="Save", command=self.save_coordinates)
+        save_button.grid(row=0, column=0, padx=5)
+
+        close_button = ttk.Button(navigation_frame, text="Close", command=self.assign_menu_window.destroy)
+        close_button.grid(row=0, column=1, padx=5)
+
+        self.assign_ingame_buttons_display_current_page()
+
+    def assign_ingame_buttons_display_current_page(self):
+        for widget in self.assign_menu_window.winfo_children():
+            if isinstance(widget, ttk.LabelFrame):
+                widget.destroy()
+
+        start_index = self.current_page * 2
+        end_index = min(start_index + 2, len(self.sections))
+        current_sections = self.sections[start_index:end_index]
+
+        for section_index, section in enumerate(current_sections):
+            section_frame = ttk.LabelFrame(
+                self.assign_menu_window, 
+                text=section["name"], 
+                padding=(10, 5)
+            )
+            section_frame.grid(
+                row=section_index, 
+                column=0, 
+                columnspan=4, 
+                padx=10, 
+                pady=10, 
+                sticky="w"
+            )
+
+            for index, (label_text, config_key) in enumerate(section["buttons"].items()):
+                label = ttk.Label(section_frame, text=f"{label_text}:")
+                label.grid(row=index, column=0, padx=10, pady=5, sticky="w")
+
+                # Initialize coordinate variables
+                coords = self.config.get(config_key, [0, 0])
+                x_var = tk.IntVar(value=coords[0])
+                y_var = tk.IntVar(value=coords[1])
+                self.coord_vars[config_key] = (x_var, y_var)
+
+                # X and Y coordinate entries
+                x_entry = ttk.Entry(section_frame, textvariable=x_var, width=6)
+                x_entry.grid(row=index, column=1, padx=5, pady=5)
+
+                y_entry = ttk.Entry(section_frame, textvariable=y_var, width=6)
+                y_entry.grid(row=index, column=2, padx=5, pady=5)
+
+                assign_button = ttk.Button(
+                    section_frame, 
+                    text="Assign Click",
+                    command=lambda key=config_key: self.start_capture_thread(key)
+                )
+                assign_button.grid(row=index, column=3, padx=5, pady=5)
+
+        self.prev_button["state"] = "normal" if self.current_page > 0 else "disabled"
+        self.next_button["state"] = "normal" if start_index + 2 < len(self.sections) else "disabled"
+
+    def open_help_window(self):
+        self.help_window = tk.Toplevel(self.root)
+        self.help_window.title("Help Window")
+
+        self.help_info = [
+            {
+                "title": "Help | Discord",
+                "subtitle1": "Discord Bot",
+                "content1": (
+                    "Follow [this tutorial](https://www.youtube.com/watch?v=-m-Z7Wav-fM) to create \nyour discord bot and paste the token into the \"Discord Bot Token\" space.\n"
+                    "Make sure to enable EVERY privileged gateway intent or the bot will not work."
+                ),
+                "subtitle2": "Webhook",
+                "content2": (
+                    "Follow [this tutorial](https://youtu.be/fKksxz2Gdnc?t=13&si=7FdMdJW6SNqSMZ4N) \nto create a discord webhook and paste the webhook \nURL into the \"Webhook URL\" space."
+                )
+            },
+            {
+                "title": "Help | Server Sniper",
+                "subtitle1": "Authorization Key",
+                "content1": (
+                    "1. Activate developer tools on your discord client by pressing Ctrl + Shift + I \nand navigate to \"Network\" tab\n"
+                    "2. Enable Fetch/XHR\n"
+                    "3. Click on any channel from any server\n"
+                    "4. Click on the messages?limit=50 option\n"
+                    "5. Right click and copy as fetch, paste into a notepad\n"
+                    "6. Copy the text in the authorization field, it should start with MTA\n"
+                    "7. Paste it into the Authorization Key field in the Server Sniper config editor"
+                ),
+                "subtitle2": "Channel Link",
+                "content2": (
+                    "1. Go to any discord server and right click the channel you want to monitor and \nsnipe servers from, click copy link\n"
+                    "2. Paste that link into the Channel Link field in the Server Sniper config editor"
+                )
+            },
+            {
+                "title": "Help | Settings",
+                "subtitle1": "Private Server Link",
+                "content1": (
+                    "1. Go to the private server you want to join\n"
+                    "2. Copy the link from the URL bar\n"
+                    "3. Paste it into the Private Server Link field in the Settings tab\n"
+                    "Note: Private Server link MUST be formatted like this: \n"
+                    "https://www.roblox.com/games/1234567890/game_name?privateServerLinkCode=ABC123\n"
+                    "You can find this link by opening your private server share URL and\n"
+                    "copying the link from the URL bar."
+                ),
+                "subtitle2": "Assign Menu Buttons",
+                "content2": (
+                    "1. Click the Assign Menu Buttons button\n"
+                    "2. Click the Assign Click button next to the button you want to assign\n"
+                    "3. Click on the location on your screen where the button is located\n"
+                    "4. Repeat for all buttons\n"
+                    "5. Click Save"
+                ),
+                "subtitle3": "External Macro",
+                "content3": (
+                    "The Start, Pause, and Stop keys are used to control an additional \n"
+                    "external macro you might have running.\n"
+                    "These keybinds MUST be set to use the /start, /pause, and /stop \n"
+                    "commands in the discord bot."
+                )
+            }
+        ]
+
+        self.current_page = 0  # Start on the first page
+
+        # Navigation Frame
+        navigation_frame = ttk.Frame(self.help_window)
+        navigation_frame.grid(row=10, column=0, columnspan=4, pady=10)
+
         self.prev_button = ttk.Button(navigation_frame, text="Previous", command=self.prev_page)
         self.prev_button.grid(row=0, column=0, padx=5)
-        
+
         self.next_button = ttk.Button(navigation_frame, text="Next", command=self.next_page)
         self.next_button.grid(row=0, column=1, padx=5)
 
-        save_button = ttk.Button(navigation_frame, text="Save", command=self.save_coordinates)
-        save_button.grid(row=0, column=2, padx=5)
-
+        close_button = ttk.Button(navigation_frame, text="Close", command=self.help_window.destroy)
+        close_button.grid(row=0, column=2, padx=5)
 
         self.display_current_page()
 
-    def open_help_window1(self):
-        help_window1 = tk.Toplevel(self.root)
-        help_window1.title("Help Window")
-        help_window1.geometry("630x300")
+    def display_current_page(self):
+        for widget in self.help_window.winfo_children():
+            if isinstance(widget, ttk.LabelFrame):
+                widget.destroy()
 
-        help_window1_info = """
-        There is no info to give for this page.
-        """
-        tk.Label(help_window1, text="Help", font=("Helvetica", 14, "bold")).pack(pady=10)
-        tk.Label(help_window1, text=help_window1_info, justify="left", anchor="w").pack(padx=10, pady=10, fill="both", expand=True)
-        ttk.Button(help_window1, text="Close", command=help_window1.destroy).pack(pady=10)
-        
-    def open_help_window2(self):
-        help_window2 = tk.Toplevel(self.root)
-        help_window2.title("Help Window | Discord")
-        help_window2.geometry("630x300")
+        start_index = self.current_page
+        end_index = min(start_index + 1, len(self.help_info))
+        current_sections = self.help_info[start_index:end_index]
 
-        help_window2_info = """
-        How to setup the Webhook tab.
-        1. Enable Webhook: Check this box to enable the webhook functionality.
-        2. Webhook URL: Enter your Discord webhook URL here.
-        3. Discord User ID (Pings): Enter the Discord User ID for pings.
-        4. Discord User/Role ID Glitch Biome Ping: Enter the User/Role ID for glitch biome pings.
-        """
+        for section_index, section in enumerate(current_sections):
+            section_frame = ttk.LabelFrame(
+                self.help_window, 
+                text=section["title"], 
+                padding=(10, 5)
+            )
+            section_frame.grid(
+                row=section_index, 
+                column=0, 
+                columnspan=4, 
+                padx=10, 
+                pady=10, 
+                sticky="w"
+            )
 
-        tk.Label(help_window2, text="Help", font=("Helvetica", 14, "bold")).pack(pady=10)
-        tk.Label(help_window2, text=help_window2_info, justify="left", anchor="w").pack(padx=10, pady=10, fill="both", expand=True)
-        ttk.Button(help_window2, text="Close", command=help_window2.destroy).pack(pady=10)
+            if "subtitle1" in section and "content1" in section:
+                subtitle1_frame = ttk.LabelFrame(section_frame, text=section["subtitle1"], padding=(5, 5))
+                subtitle1_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+                content1_label = ttk.Label(subtitle1_frame, text=section["content1"], wraplength=600, justify="left")
+                content1_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+            if "subtitle2" in section and "content2" in section:
+                subtitle2_frame = ttk.LabelFrame(section_frame, text=section["subtitle2"], padding=(5, 5))
+                subtitle2_frame.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+                content2_label = ttk.Label(subtitle2_frame, text=section["content2"], wraplength=600, justify="left")
+                content2_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+            if "subtitle3" in section and "content3" in section:
+                subtitle3_frame = ttk.LabelFrame(section_frame, text=section["subtitle3"], padding=(5, 5))
+                subtitle3_frame.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+                content3_label = ttk.Label(subtitle3_frame, text=section["content3"], wraplength=600, justify="left")
+                content3_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+        self.prev_button["state"] = "normal" if self.current_page > 0 else "disabled"
+        self.next_button["state"] = "normal" if start_index + 1 < len(self.help_info) else "disabled"
+
+        # Adjust window size based on content
+        if self.current_page == 0:
+            self.help_window.geometry("660x345")
+        elif self.current_page == 1:
+            self.help_window.geometry("630x450")
+        elif self.current_page == 2:
+            self.help_window.geometry("700x600")
+
+    def prev_page(self):
+        self.current_page -= 1
+        self.display_current_page()
+
+    def next_page(self):
+        self.current_page += 1
+        self.display_current_page()
 
     def edit_config_menu(self):
         config_window = tk.Toplevel(self.root)
@@ -363,66 +474,6 @@ class DiscordMacroUI:
         navigation_frame.grid(row=10, column=0, columnspan=4, pady=5)
         ttk.Button(navigation_frame, text="Close", command=config_window.destroy).pack(pady=5)
 
-    def display_current_page(self):
-        for widget in self.assign_menu_window.winfo_children():
-            if isinstance(widget, ttk.LabelFrame):
-                widget.destroy()
-
-        start_index = self.current_page * 2
-        end_index = min(start_index + 2, len(self.sections))
-        current_sections = self.sections[start_index:end_index]
-
-        for section_index, section in enumerate(current_sections):
-            section_frame = ttk.LabelFrame(
-                self.assign_menu_window, 
-                text=section["name"], 
-                padding=(10, 5)
-            )
-            section_frame.grid(
-                row=section_index, 
-                column=0, 
-                columnspan=4, 
-                padx=10, 
-                pady=10, 
-                sticky="w"
-            )
-
-            for index, (label_text, config_key) in enumerate(section["buttons"].items()):
-                label = ttk.Label(section_frame, text=f"{label_text}:")
-                label.grid(row=index, column=0, padx=10, pady=5, sticky="w")
-
-                # Initialize coordinate variables
-                coords = self.config.get(config_key, [0, 0])
-                x_var = tk.IntVar(value=coords[0])
-                y_var = tk.IntVar(value=coords[1])
-                self.coord_vars[config_key] = (x_var, y_var)
-
-                # X and Y coordinate entries
-                x_entry = ttk.Entry(section_frame, textvariable=x_var, width=6)
-                x_entry.grid(row=index, column=1, padx=5, pady=5)
-
-                y_entry = ttk.Entry(section_frame, textvariable=y_var, width=6)
-                y_entry.grid(row=index, column=2, padx=5, pady=5)
-
-                assign_button = ttk.Button(
-                    section_frame, 
-                    text="Assign Click",
-                    command=lambda key=config_key: self.start_capture_thread(key)
-                )
-                assign_button.grid(row=index, column=3, padx=5, pady=5)
-
-        self.prev_button["state"] = "normal" if self.current_page > 0 else "disabled"
-        self.next_button["state"] = "normal" if start_index + 2 < len(self.sections) else "disabled"
-
-    def prev_page(self):
-        self.current_page -= 1
-        self.display_current_page()
-
-    def next_page(self):
-        self.current_page += 1
-        self.display_current_page()
-    
-
     def start_capture_thread(self, config_key):
         capture_thread = threading.Thread(target=self.capture_mouse_position, args=(config_key,))
         capture_thread.daemon = True
@@ -448,18 +499,13 @@ class DiscordMacroUI:
             del self.capture_window
 
         self.capture_window.bind("<Button-1>", on_click)
-    
-    def navigate_paths(self, direction):
-        new_page = self.current_page + direction
-        if 0 <= new_page <= (len(self.sub_paths) - 1) // 4:
-            self.current_page = new_page
-            self.update_displayed_paths()
-    
-    def find_file(self, base_path, filename):
-        for root, _, files in os.walk(base_path):
-            if filename in files:
-                return os.path.join(root, filename)
-        return None
+
+    def save_coordinates(self):
+        for config_key, (x_var, y_var) in self.coord_vars.items():
+            self.config[config_key] = [x_var.get(), y_var.get()]
+
+        self.save_config()
+        self.assign_menu_window.destroy()
         
     def setup_tabs(self):
         self.tab_control = ttk.Notebook(self.root)
@@ -488,19 +534,29 @@ class DiscordMacroUI:
         info_frame.grid(column=0, row=0, padx=(5, 10), pady=5, sticky="nw")
 
         # Information Label
-        self.info_label = ttk.Label(info_frame, text="Thanks for using SolsBot.\nThis page is mostly info on how to set up the app.\nIf you are still confused, please feel free to ask in my DMs (vexthecoder).\nYou may also click the Help button on each tab for more information.")
-        self.info_label.grid(column=0, row=1, columnspan=2, sticky="w", padx=5, pady=5)
+        self.info_label = ttk.Label(info_frame, text="Thanks for using SolsBot.", font=("Helvetica", 14, "bold"))
+        self.info_label.grid(column=0, row=0, columnspan=2, sticky="w", padx=5, pady=5)
 
-        # Assign Menu Button
-        self.assign_menu_button = ttk.Button(info_frame, text="Assign Menu Buttons", command=self.open_assign_menu_window)
-        self.assign_menu_button.grid(column=0, row=2, sticky="w", padx=5, pady=5)
+        # Navigation Info Label
+        self.navigation_info_label = ttk.Label(info_frame, text="Use the tabs above to navigate through different sections of the GUI.", wraplength=400)
+        self.navigation_info_label.grid(column=0, row=1, columnspan=2, sticky="w", padx=5, pady=5)
+
+        # Detailed Navigation Info
+        self.detailed_navigation_info_label = ttk.Label(info_frame, text=(
+            "Info: Provides general information and navigation tips.\n"
+            "Discord: Configure the Discord bot and webhook settings.\n"
+            "Server Sniper: Snipe private servers.\n"
+            "Settings: Adjust general settings.\n"
+            "Credits: View credits and contributors."
+        ), wraplength=400, justify="left")
+        self.detailed_navigation_info_label.grid(column=0, row=2, columnspan=2, sticky="w", padx=5, pady=5)
 
         # Bottom Frame
         self.bottom_frame = ttk.Frame(self.root, padding=3)
         self.bottom_frame.pack(fill="x")
 
         # Help Button
-        self.help_button = ttk.Button(self.bottom_frame, text="Help", command=self.open_help_window1)
+        self.help_button = ttk.Button(self.bottom_frame, text="Help", command=self.open_help_window)
         self.help_button.grid(row=0, column=0, padx=5, sticky="e")
 
         # Dark Mode Switch
@@ -675,6 +731,10 @@ class DiscordMacroUI:
         
         import_button = ttk.Button(general_frame, text="Import Settings", command=self.import_settings)
         import_button.grid(column=0, row=4, padx=5, pady=5, sticky="w")
+
+        # Assign Menu Button
+        self.assign_menu_button = ttk.Button(general_frame, text="Assign Menu Buttons", command=self.open_assign_menu_window)
+        self.assign_menu_button.grid(column=1, row=4, sticky="w", padx=5, pady=5)
     
     def setup_credits_tab(self):
         main_frame = ttk.Frame(self.credits_tab)

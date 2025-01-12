@@ -1,7 +1,6 @@
 pynput
 opencv-python
 pyautogui
-pytesseract
 numpy
 pygetwindow
 pypiwin32
@@ -11,13 +10,6 @@ ahk
 pystray
 discord.py
 keyboard
-time
-json
 requests
-collections
-webbrowser
 datetime
-re
-os
-sys
-threading
+win10toast
