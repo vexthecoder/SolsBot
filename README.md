@@ -5,6 +5,7 @@
 [FAQ](https://github.com/vexthecoder/SolsBot?tab=readme-ov-file#FAQ)<br>
 [Setup](https://github.com/vexthecoder/SolsBot?tab=readme-ov-file#Setup)<br>
 [Credits](https://github.com/vexthecoder/SolsBot?tab=readme-ov-file#Credits)<br>
+[To-Do](https://github.com/vexthecoder/SolsBot?tab=readme-ov-file#To-Do)<br>
 
 ## Installation
   - Download the most recent version of SolsBot through the most recent [GitHub Release](https://github.com/vexthecoder/SolsBot/releases/latest) (Download source code ZIP)
@@ -21,11 +22,11 @@ When installing python, make SURE to click "Add python.exe to PATH" in the botto
 ## Features
 SolsBot has a couple of different features it is capable of which are mostly Discord related. These include:
 - Discord Integration
-  - Discord Webhooks
+  - Discord Webhook Support
   - Discord Bot Remote Commands
 - Server Sniper
-- AutoClicker
 - External Macro Support
+- More to come!..
 
 ## FAQ
 (1) I have finished setting up the discord bot but the slash commands wont show up!<br>
@@ -42,6 +43,12 @@ SolsBot has a couple of different features it is capable of which are mostly Dis
 
 (5) What all do you plan on adding to SolsBot?<br>
 --> Honestly, I'm not too sure, I feel like I have added everything I wanted. But!, if you have any suggestions on what to add, feel free to [DM me on Discord](https://discord.com/users/1018875765565177976) anytime!
+
+(6) Whenever I run start.bat, it closes instantly. How do I fix this?<br>
+--> This issue is usually caused by you not having the right version of Python, or you have not installed all of the Python requirements. You can fix this by going through the installation steps again. If the issue persists, try uninstalling and reinstalling Python version 3.12.7.
+
+(7) The console keeps getting spammed with "Server Sniper | Error occurred: 0". How do I fix this?<br>
+--> This issue is usually caused by an invalid Auth Key or Discord rate limiting you, but hardly the latter. You can fix this issue by going through the setup steps for the Server Sniper module again. Follow the steps VERY carefully.
 
 (?) Soon...
 
@@ -69,3 +76,11 @@ Channel Link:
 - vexthecoder (Basically Everything)
 ### Contributers
 - Noteab and Their Team (Original Source Code)
+
+## To-Do
+### v1.0.2
+1. Multi-channel sniping support.
+### v1.1
+1. Finalize AutoClicker module.
+2. More Discord commands.
+3. Cutscene detection? (most likely not)

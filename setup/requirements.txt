@@ -3,6 +3,7 @@ pyperclip
 pynput
 Pillow
 requests
+discord
 discord.py
 pyautogui
 keyboard

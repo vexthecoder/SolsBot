@@ -62,7 +62,7 @@ def start_script(update_status_callback=None, update_recent_message_callback=Non
     read_config()  # Ensure the config is read before checking values
 
     if not config.get("authorization_key") or not config.get("discord_channel_link"):
-        print("Error: Authorization Key and Discord Channel Link must be set in the configuration.")
+        print("Server Sniper | Error: Authorization Key and Discord Channel Link must be set in the configuration.")
         return
 
     if running:
@@ -110,13 +110,13 @@ def main(update_recent_message_callback=None):
     messages = deque()
 
     if not config.get("authorization_key"):
-        show_notification("Error!", "Authorization Key Empty! Go to the Github README for instructions to get one.")
+        show_notification("Server Sniper | Error!", "Authorization Key Empty! Go to the Github README for instructions to get one.")
         return
 
     try:
         channel_id = re.search(r"[0-9]+/?$", config["discord_channel_link"]).group(0)
     except AttributeError:
-        show_notification("Error!", "Discord Channel Link Empty or Invalid!")
+        show_notification("Server Sniper | Error!", "Discord Channel Link Empty or Invalid!")
         return
 
     print("Server Sniper has resumed.")
@@ -136,11 +136,11 @@ def main(update_recent_message_callback=None):
             response_json = response.json()
 
             if not response_json:
-                print("Error: Empty response from Discord API.")
+                print("Server Sniper | Error: Empty response from Discord API.")
                 continue
 
             if isinstance(response_json, dict) and response_json.get("message") == "401: Unauthorized":
-                show_notification("ERROR!", "Authentication key invalid or timed out. Refresh the key.")
+                show_notification("Server Sniper | ERROR!", "Authentication key invalid or timed out. Refresh the key.")
                 return
 
             message = response_json[0]
@@ -196,7 +196,7 @@ def main(update_recent_message_callback=None):
                 messages.popleft()
 
         except Exception as e:
-            print(f"Error occurred: {e}")
+            print(f"Server Sniper | Error occurred: {e}")
 
         sleep(int(config.get("sleep_duration", 5)))
 
@@ -216,7 +216,7 @@ def on_press(key):
         elif key == stop_key:
             stop_script()
     except Exception as e:
-        print(f"Error handling key press: {e}")
+        print(f"Server Sniper | Error handling key press: {e}")
 
 if __name__ == "__main__":
     if not TOAST_AVAILABLE:

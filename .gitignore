@@ -177,3 +177,5 @@ images/current_screen.png
 images/macro_inv_ss.png
 images/biomefound.png
 .git/*
+refresh.bat
+refresh.ps1

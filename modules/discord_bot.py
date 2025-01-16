@@ -1,11 +1,4 @@
-import discord # type: ignore
-import json
-import threading
-import pyautogui
-import requests
-import os
-import keyboard # type: ignore
-import time
+import discord, json, threading, pyautogui, requests, os, keyboard, time # type: ignore
 
 from discord.ext import commands # type: ignore
 from discord import app_commands # type: ignore
@@ -35,7 +28,7 @@ def setup_bot(running_event):
             synced = await bot.tree.sync()
             print(f"Synced {len(synced)} commands with Discord.")
         except Exception as e:
-            print(f"Error syncing commands: {e}")
+            print(f"Discord Bot | Error syncing commands: {e}")
         if not config.get("DiscordBot_UserID"):
             print("Warning: No User ID configured. Commands will not be executable until a valid User ID is set.")
             webhook_url = config.get("WebhookLink")
@@ -128,7 +121,7 @@ def setup_bot(running_event):
                 await ctx.followup.send(embed=local_embed, ephemeral=True)
         except Exception as e:
             local_embed = discord.Embed(
-                description=f"Error taking screenshot: {e}", 
+                description=f"Discord Bot | /screenshot | Error taking screenshot: {e}", 
                 color=discord.Color.from_rgb(128, 128, 128)
             )
             await ctx.followup.send(embed=local_embed, ephemeral=True)
@@ -319,7 +312,7 @@ def setup_bot(running_event):
                 await ctx.followup.send(embed=local_embed, ephemeral=True)
         except Exception as e:
             local_embed = discord.Embed(
-                description=f"Error taking screenshot: {e}", 
+                description=f"Discord Bot | /chat | Error taking screenshot: {e}", 
                 color=discord.Color.from_rgb(128, 128, 128)
             )
             await ctx.followup.send(embed=local_embed, ephemeral=True)

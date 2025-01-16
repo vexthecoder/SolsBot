@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import re, os, sys, json, threading, time, pyautogui, webbrowser, requests
+import os, sys, json, threading, webbrowser, requests
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import threading
 
@@ -129,7 +129,7 @@ class DiscordMacroUI:
 
             self.system_message("Settings imported successfully! Please restart the macro to apply the changes.")
         except Exception as e:
-            self.system_message(f"Error importing settings: {str(e)}")
+            self.system_message(f"Settings | Error importing settings: {str(e)}")
     
     def get_key_bindings(self):
         azerty_keyboard = self.config.get("AZERTY_Keyboard", False)
@@ -151,7 +151,7 @@ class DiscordMacroUI:
                 elif hasattr(key, 'char') and key.char == stop_key.lower():
                     stop_script()
             except Exception as e:
-                print(f"Error handling key press: {e}")
+                print(f"Server Sniper | Error handling key press: {e}")
 
         with keyboard.Listener(on_press=on_press) as listener:
             listener.join()
@@ -172,7 +172,7 @@ class DiscordMacroUI:
             self.config["PrivateServerLink"] = link
             with open(self.config_path, "w") as config_file:
                 json.dump(self.config, config_file, indent=4)
-        else:
+        if link != "" and not self.is_valid_ps_link(link):
             messagebox.showerror("Error", "Invalid link format. Please correct it.")
 
     def is_valid_ps_link(self, link):
@@ -271,22 +271,27 @@ class DiscordMacroUI:
 
         self.help_info = [
             {
+                "type": "release",
                 "title": "Help | Discord",
                 "subtitle1": "Discord Bot",
                 "content1": (
-                    "Follow [this tutorial](https://www.youtube.com/watch?v=-m-Z7Wav-fM) to create \nyour discord bot and paste the token into the \"Discord Bot Token\" space.\n"
+                    "Follow the tutorial to create your discord bot and paste the token into the \"Discord Bot Token\" space.\n"
                     "Make sure to enable EVERY privileged gateway intent or the bot will not work."
                 ),
+                "link1": "https://www.youtube.com/watch?v=-m-Z7Wav-fM",
                 "subtitle2": "Webhook",
                 "content2": (
-                    "Follow [this tutorial](https://youtu.be/fKksxz2Gdnc?t=13&si=7FdMdJW6SNqSMZ4N) \nto create a discord webhook and paste the webhook \nURL into the \"Webhook URL\" space."
-                )
+                    "Follow the tutorial to create a discord webhook and paste the webhook URL into the \"Webhook URL\" space."
+                ),
+                "link2": "https://youtu.be/fKksxz2Gdnc?t=13&si=7FdMdJW6SNqSMZ4N",
+                "geometry": "675x410"
             },
             {
+                "type": "release",
                 "title": "Help | Server Sniper",
                 "subtitle1": "Authorization Key",
                 "content1": (
-                    "1. Activate developer tools on your discord client by pressing Ctrl + Shift + I \nand navigate to \"Network\" tab\n"
+                    "1. Activate developer tools on your discord client by pressing Ctrl + Shift + I and navigate to \"Network\" tab\n"
                     "2. Enable Fetch/XHR\n"
                     "3. Click on any channel from any server\n"
                     "4. Click on the messages?limit=50 option\n"
@@ -298,9 +303,28 @@ class DiscordMacroUI:
                 "content2": (
                     "1. Go to any discord server and right click the channel you want to monitor and \nsnipe servers from, click copy link\n"
                     "2. Paste that link into the Channel Link field in the Server Sniper config editor"
-                )
+                ),
+                "geometry": "690x450"
             },
             {
+                "type": "developer",
+                "title": "Help | Auto Clicker",
+                "subtitle1": "Hotkey",
+                "content1": (
+                    "Enter the hotkey you want to use to start the auto clicker."
+                ),
+                "subtitle2": "Interval",
+                "content2": (
+                    "Enter the interval in milliseconds, seconds, and/or minutes between each click."
+                ),
+                "subtitle3": "Location",
+                "content3": (
+                    "Click the Assign Location button and click on the location on your screen where you want the auto clicker to click."
+                ),
+                "geometry": "690x365"
+            },
+            {
+                "type": "release",
                 "title": "Help | Settings",
                 "subtitle1": "Private Server Link",
                 "content1": (
@@ -326,7 +350,8 @@ class DiscordMacroUI:
                     "external macro you might have running.\n"
                     "These keybinds MUST be set to use the /start, /pause, and /stop \n"
                     "commands in the discord bot."
-                )
+                ),
+                "geometry": "695x600"
             }
         ]
 
@@ -352,6 +377,12 @@ class DiscordMacroUI:
             if isinstance(widget, ttk.LabelFrame):
                 widget.destroy()
 
+        while self.current_page < len(self.help_info) and self.help_info[self.current_page]["type"] == "developer" and not self.config.get("developer", False):
+            self.current_page += 1
+
+        if self.current_page >= len(self.help_info):
+            self.current_page = len(self.help_info) - 1
+
         start_index = self.current_page
         end_index = min(start_index + 1, len(self.help_info))
         current_sections = self.help_info[start_index:end_index]
@@ -376,12 +407,18 @@ class DiscordMacroUI:
                 subtitle1_frame.grid(row=0, column=0, padx=10, pady=5, sticky="w")
                 content1_label = ttk.Label(subtitle1_frame, text=section["content1"], wraplength=600, justify="left")
                 content1_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+                if "link1" in section:
+                    link1_button = ttk.Button(subtitle1_frame, text="Open Tutorial", command=lambda url=section["link1"]: webbrowser.open(url))
+                    link1_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
             if "subtitle2" in section and "content2" in section:
                 subtitle2_frame = ttk.LabelFrame(section_frame, text=section["subtitle2"], padding=(5, 5))
                 subtitle2_frame.grid(row=1, column=0, padx=10, pady=5, sticky="w")
                 content2_label = ttk.Label(subtitle2_frame, text=section["content2"], wraplength=600, justify="left")
                 content2_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
+                if "link2" in section:
+                    link2_button = ttk.Button(subtitle2_frame, text="Open Tutorial", command=lambda url=section["link2"]: webbrowser.open(url))
+                    link2_button.grid(row=1, column=0, padx=10, pady=5, sticky="w")
 
             if "subtitle3" in section and "content3" in section:
                 subtitle3_frame = ttk.LabelFrame(section_frame, text=section["subtitle3"], padding=(5, 5))
@@ -393,19 +430,19 @@ class DiscordMacroUI:
         self.next_button["state"] = "normal" if start_index + 1 < len(self.help_info) else "disabled"
 
         # Adjust window size based on content
-        if self.current_page == 0:
-            self.help_window.geometry("660x345")
-        elif self.current_page == 1:
-            self.help_window.geometry("630x450")
-        elif self.current_page == 2:
-            self.help_window.geometry("700x600")
+        if current_sections:
+            self.help_window.geometry(current_sections[0]["geometry"])
 
     def prev_page(self):
         self.current_page -= 1
+        while self.current_page >= 0 and self.help_info[self.current_page]["type"] == "developer" and not self.config.get("developer", False):
+            self.current_page -= 1
         self.display_current_page()
 
     def next_page(self):
         self.current_page += 1
+        while self.current_page < len(self.help_info) and self.help_info[self.current_page]["type"] == "developer" and not self.config.get("developer", False):
+            self.current_page += 1
         self.display_current_page()
 
     def edit_config_menu(self):
