@@ -78,7 +78,7 @@ Channel Link:
 - Noteab and Their Team (Original Source Code)
 
 ## To-Do
-### v1.0.2
+### v1.0.3
 1. Multi-channel sniping support.
 ### v1.1
 1. Finalize AutoClicker module.

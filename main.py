@@ -15,7 +15,7 @@ from pynput.mouse import Button
 class DiscordMacroUI:
     def __init__(self, root):
         self.root = root
-        self.root.title(f"SolsBot UI | v1.0.1")
+        self.root.title(f"SolsBot UI | v1.0.2")
         self.root.configure(bg="#2C2F33")
         self.dark_mode = True
 
@@ -82,8 +82,8 @@ class DiscordMacroUI:
 
     def check_for_updates(self):
         update_num = requests.get("https://raw.githubusercontent.com/vexthecoder/SolsBot/main/version").text.strip()
-        if update_num != "v1.0.1":
-            current_version = "v1.0.1"
+        if update_num != "v1.0.2":
+            current_version = "v1.0.2"
             latest_version = update_num
             if latest_version != current_version:
                 self.show_update_popup(self.root, current_version, latest_version)
