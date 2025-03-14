@@ -1,3 +1,9 @@
+## Note
+SolsBot will no longer be worked on. If you enjoyed SolsBot, feel free to check out some other Sol's RNG related projects I've contributed to:
+- [Oyster Detector](https://github.com/vexthecoder/OysterDetector)
+- [SolsCalc](https://github.com/ImPunken/SolsCalc)
+- [Aurium](https://github.com/goldfish-cool/Goldens-Macro/)
+
 # SolsBot
 ## JumpTo
 [Installation Guide](https://github.com/vexthecoder/SolsBot?tab=readme-ov-file#Installation)<br>
